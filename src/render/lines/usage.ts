@@ -280,9 +280,14 @@ function formatUsageWindowPart({
     : "";
 
   if (usageBarEnabled) {
+    // Battery mode: in 'remaining' mode the bar fills by remaining (drains as you
+    // use it) but stays colored by used %, so it goes red as it approaches empty.
+    const usedPercent = percent ?? 0;
+    const barFill = usageValueMode === 'remaining' ? Math.max(0, 100 - usedPercent) : usedPercent;
+    const bar = quotaBar(barFill, barWidth, colors, usedPercent);
     const body = resetSuffix
-      ? `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay} ${resetSuffix}`
-      : `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay}`;
+      ? `${bar} ${usageDisplay} ${resetSuffix}`
+      : `${bar} ${usageDisplay}`;
     return forceLabel ? `${styledLabel} ${body}` : body;
   }
 
