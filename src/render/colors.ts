@@ -139,22 +139,45 @@ export function getQuotaColor(percent: number, colors?: Partial<HudColorOverride
   return resolveAnsi(colors?.usage, BRIGHT_BLUE);
 }
 
+/**
+ * Remaining-capacity "battery" palette, matching serenvia/agent-console's usage
+ * meter (Night Owl / codex-cli diag). Keyed on REMAINING percent: the color cools
+ * toward cyan-green as capacity rises and warms toward red as it drains.
+ */
+const USAGE_METER = {
+  empty: '#637777', // depleted (gray)
+  plenty: '#7fdbca', // >= 80% left (cyan-green)
+  good: '#addb67', // >= 60% left (green)
+  fair: '#ecc48d', // >= 40% left (sand)
+  low: '#f78c6c', // >= 20% left (orange)
+  critical: '#f07178', // < 20% left (red)
+} as const;
+
+export function usageMeterColor(remainingPercent: number | null): string {
+  if (remainingPercent === null || !Number.isFinite(remainingPercent)) {
+    return BRIGHT_BLUE;
+  }
+  if (remainingPercent <= 0) return hexToAnsi(USAGE_METER.empty);
+  if (remainingPercent >= 80) return hexToAnsi(USAGE_METER.plenty);
+  if (remainingPercent >= 60) return hexToAnsi(USAGE_METER.good);
+  if (remainingPercent >= 40) return hexToAnsi(USAGE_METER.fair);
+  if (remainingPercent >= 20) return hexToAnsi(USAGE_METER.low);
+  return hexToAnsi(USAGE_METER.critical);
+}
+
 export function quotaBar(
   percent: number,
   width: number = 10,
   colors?: Partial<HudColorOverrides>,
-  colorPercent?: number,
+  colorOverride?: string,
 ): string {
   const safeWidth = Number.isFinite(width) ? Math.max(0, Math.round(width)) : 0;
   const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
   const filled = Math.round((safePercent / 100) * safeWidth);
   const empty = safeWidth - filled;
-  // Bar length reflects `percent`; color can be driven by a separate basis
-  // (e.g. battery/"remaining" mode fills by remaining but stays danger-colored by used).
-  const colorBasis = Number.isFinite(colorPercent as number)
-    ? Math.min(100, Math.max(0, colorPercent as number))
-    : safePercent;
-  const color = getQuotaColor(colorBasis, colors);
+  // Bar length reflects `percent`; an explicit colorOverride lets battery/"remaining"
+  // mode fill by remaining while coloring by the remaining-capacity palette.
+  const color = colorOverride ?? getQuotaColor(safePercent, colors);
   const filledChar = colors?.barFilled ?? '█';
   const emptyChar = colors?.barEmpty ?? '░';
   return `${color}${filledChar.repeat(filled)}${DIM}${emptyChar.repeat(empty)}${RESET}`;
