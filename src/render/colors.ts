@@ -139,12 +139,22 @@ export function getQuotaColor(percent: number, colors?: Partial<HudColorOverride
   return resolveAnsi(colors?.usage, BRIGHT_BLUE);
 }
 
-export function quotaBar(percent: number, width: number = 10, colors?: Partial<HudColorOverrides>): string {
+export function quotaBar(
+  percent: number,
+  width: number = 10,
+  colors?: Partial<HudColorOverrides>,
+  colorPercent?: number,
+): string {
   const safeWidth = Number.isFinite(width) ? Math.max(0, Math.round(width)) : 0;
   const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
   const filled = Math.round((safePercent / 100) * safeWidth);
   const empty = safeWidth - filled;
-  const color = getQuotaColor(safePercent, colors);
+  // Bar length reflects `percent`; color can be driven by a separate basis
+  // (e.g. battery/"remaining" mode fills by remaining but stays danger-colored by used).
+  const colorBasis = Number.isFinite(colorPercent as number)
+    ? Math.min(100, Math.max(0, colorPercent as number))
+    : safePercent;
+  const color = getQuotaColor(colorBasis, colors);
   const filledChar = colors?.barFilled ?? '█';
   const emptyChar = colors?.barEmpty ?? '░';
   return `${color}${filledChar.repeat(filled)}${DIM}${emptyChar.repeat(empty)}${RESET}`;
