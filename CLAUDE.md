@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+Repository-wide fork and safety policy lives in [`AGENTS.md`](AGENTS.md);
+this file remains the build and architecture reference inherited from the
+upstream project.
+
 ## Project Overview
 
 Claude HUD is a Claude Code plugin that displays a real-time multi-line statusline. It shows context health, tool activity, agent status, and todo progress.
