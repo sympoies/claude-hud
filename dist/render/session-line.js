@@ -1,7 +1,7 @@
 import { isLimitReached } from '../types.js';
 import { getContextPercent, getBufferedPercent, formatModelName, resolveModelName, shouldHideUsage } from '../stdin.js';
 import { getOutputSpeed } from '../speed-tracker.js';
-import { coloredBar, critical, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, getContextColor, getQuotaColor, quotaBar, custom as customColor, RESET } from './colors.js';
+import { coloredBar, critical, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, getContextColor, getQuotaColor, quotaBar, usageMeterColor, custom as customColor, RESET } from './colors.js';
 import { getAdaptiveBarWidth } from '../utils/terminal.js';
 import { renderCostEstimate } from './lines/cost.js';
 import { renderPromptCacheLine } from './lines/prompt-cache.js';
@@ -365,36 +365,55 @@ export function renderSessionLine(ctx) {
     return line;
 }
 function formatCompactWindowPart(windowLabel, percent, resetAt, timeFormat, colors, usageValueMode = 'percent', wallClockOpts) {
-    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode);
+    const meterColor = usageColor(percent, usageValueMode);
+    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode, meterColor);
     const reset = formatResetTime(resetAt, timeFormat, wallClockOpts);
     const styledLabel = label(`${windowLabel}:`, colors);
     return reset
         ? `${styledLabel} ${usageDisplay} ${label(`(${reset})`, colors)}`
         : `${styledLabel} ${usageDisplay}`;
 }
-function formatUsagePercent(percent, colors, mode = 'percent') {
+function formatUsagePercent(percent, colors, mode = 'percent', colorOverride) {
     if (percent === null) {
         return label('--', colors);
     }
-    const color = getQuotaColor(percent, colors);
+    const color = colorOverride ?? getQuotaColor(percent, colors);
     const displayPercent = mode === 'remaining' ? Math.max(0, 100 - percent) : percent;
     return `${color}${displayPercent}%${RESET}`;
 }
+/**
+ * Color for the usage number/bar. In 'remaining' (battery) mode it follows the
+ * Night Owl remaining-capacity palette; otherwise the default used-based scale.
+ */
+function usageColor(percent, mode) {
+    if (mode !== 'remaining' || percent === null) {
+        return undefined;
+    }
+    return usageMeterColor(Math.max(0, 100 - percent));
+}
 function formatUsageWindowPart({ label: windowLabel, percent, resetAt, colors, usageBarEnabled, barWidth, timeFormat = 'relative', showResetLabel, forceLabel = false, usageValueMode = 'percent', windowDurationLabel, wallClockOpts, }) {
-    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode);
+    const meterColor = usageColor(percent, usageValueMode);
+    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode, meterColor);
     const reset = formatResetTime(resetAt, timeFormat, wallClockOpts);
     const styledLabel = label(windowLabel, colors);
     // "resets in X" for relative/both; "resets X" for absolute (avoids "resets in at 14:30")
     const resetsKey = timeFormat === 'absolute' ? 'format.resets' : 'format.resetsIn';
     if (usageBarEnabled) {
+        // Battery mode: 'remaining' fills the bar by remaining (drains as you use it)
+        // and follows the remaining-capacity palette, warming to red near empty.
+        const barFill = percent === null
+            ? 0
+            : usageValueMode === 'remaining'
+                ? Math.max(0, 100 - percent)
+                : percent;
         // Relative mode keeps the upstream "(duration / windowLabel)" pattern (e.g. "2h 30m / 5h").
         // Absolute/both modes use the preposition form instead — "(at 14:30 / 5h)" is incoherent.
         const barReset = timeFormat === 'relative'
             ? (reset ? `${reset} / ${windowDurationLabel ?? windowLabel}` : null)
             : (reset ? (showResetLabel ? `${t(resetsKey)} ${reset}` : reset) : null);
         const body = barReset
-            ? `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay} (${barReset})`
-            : `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay}`;
+            ? `${quotaBar(barFill, barWidth, colors, meterColor)} ${usageDisplay} (${barReset})`
+            : `${quotaBar(barFill, barWidth, colors, meterColor)} ${usageDisplay}`;
         return forceLabel ? `${styledLabel} ${body}` : body;
     }
     const resetSuffix = reset

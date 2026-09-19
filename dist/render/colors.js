@@ -108,12 +108,43 @@ export function getQuotaColor(percent, colors) {
         return resolveAnsi(colors?.usageWarning, BRIGHT_MAGENTA);
     return resolveAnsi(colors?.usage, BRIGHT_BLUE);
 }
-export function quotaBar(percent, width = 10, colors) {
+/**
+ * Remaining-capacity "battery" palette, matching the Night Owl capacity meter.
+ * Keyed on REMAINING percent: the color cools
+ * toward cyan-green as capacity rises and warms toward red as it drains.
+ */
+const USAGE_METER = {
+    empty: '#637777', // depleted (gray)
+    plenty: '#7fdbca', // >= 80% left (cyan-green)
+    good: '#addb67', // >= 60% left (green)
+    fair: '#ecc48d', // >= 40% left (sand)
+    low: '#f78c6c', // >= 20% left (orange)
+    critical: '#f07178', // < 20% left (red)
+};
+export function usageMeterColor(remainingPercent) {
+    if (remainingPercent === null || !Number.isFinite(remainingPercent)) {
+        return BRIGHT_BLUE;
+    }
+    if (remainingPercent <= 0)
+        return hexToAnsi(USAGE_METER.empty);
+    if (remainingPercent >= 80)
+        return hexToAnsi(USAGE_METER.plenty);
+    if (remainingPercent >= 60)
+        return hexToAnsi(USAGE_METER.good);
+    if (remainingPercent >= 40)
+        return hexToAnsi(USAGE_METER.fair);
+    if (remainingPercent >= 20)
+        return hexToAnsi(USAGE_METER.low);
+    return hexToAnsi(USAGE_METER.critical);
+}
+export function quotaBar(percent, width = 10, colors, colorOverride) {
     const safeWidth = Number.isFinite(width) ? Math.max(0, Math.round(width)) : 0;
     const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
     const filled = Math.round((safePercent / 100) * safeWidth);
     const empty = safeWidth - filled;
-    const color = getQuotaColor(safePercent, colors);
+    // Bar length reflects `percent`; an explicit colorOverride lets battery/"remaining"
+    // mode fill by remaining while coloring by the remaining-capacity palette.
+    const color = colorOverride ?? getQuotaColor(safePercent, colors);
     const filledChar = colors?.barFilled ?? '█';
     const emptyChar = colors?.barEmpty ?? '░';
     return `${color}${filledChar.repeat(filled)}${DIM}${emptyChar.repeat(empty)}${RESET}`;

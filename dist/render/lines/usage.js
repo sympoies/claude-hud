@@ -1,6 +1,6 @@
 import { isLimitReached } from "../../types.js";
 import { shouldHideUsage } from "../../stdin.js";
-import { critical, label, getQuotaColor, quotaBar, RESET } from "../colors.js";
+import { critical, label, getQuotaColor, quotaBar, usageMeterColor, RESET } from "../colors.js";
 import { getAdaptiveBarWidth } from "../../utils/terminal.js";
 import { t } from "../../i18n/index.js";
 import { progressLabel, } from "./label-align.js";
@@ -166,23 +166,35 @@ function appendBalance(line, balanceLabel) {
     return balanceLabel ? `${line} | ${balanceLabel}` : line;
 }
 function formatCompactWindowPart(windowLabel, percent, resetAt, windowMs, timeFormat, colors, usageValueMode = 'percent', wallClockOpts) {
-    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode);
+    const meterColor = usageColor(percent, usageValueMode, colors);
+    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode, meterColor);
     const reset = formatWindowTime(resetAt, windowMs, timeFormat, wallClockOpts);
     const styledLabel = label(`${windowLabel}:`, colors);
     return reset
         ? `${styledLabel} ${usageDisplay} ${label(`(${reset})`, colors)}`
         : `${styledLabel} ${usageDisplay}`;
 }
-function formatUsagePercent(percent, colors, mode = 'percent') {
+function formatUsagePercent(percent, colors, mode = 'percent', colorOverride) {
     if (percent === null) {
         return label("--", colors);
     }
-    const color = getQuotaColor(percent, colors);
+    const color = colorOverride ?? getQuotaColor(percent, colors);
     const displayPercent = mode === 'remaining' ? Math.max(0, 100 - percent) : percent;
     return `${color}${displayPercent}%${RESET}`;
 }
+/**
+ * Color for the usage number/bar. In 'remaining' (battery) mode it follows the
+ * Night Owl remaining-capacity palette; otherwise the default used-based scale.
+ */
+function usageColor(percent, mode, colors) {
+    if (mode !== 'remaining' || percent === null) {
+        return undefined;
+    }
+    return usageMeterColor(Math.max(0, 100 - percent));
+}
 function formatUsageWindowPart({ label: windowLabel, labelKey, percent, resetAt, windowMs, colors, usageBarEnabled, barWidth, timeFormat = 'relative', showResetLabel, forceLabel = false, labelOptions = {}, usageValueMode = 'percent', wallClockOpts, }) {
-    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode);
+    const meterColor = usageColor(percent, usageValueMode, colors);
+    const usageDisplay = formatUsagePercent(percent, colors, usageValueMode, meterColor);
     const reset = formatWindowTime(resetAt, windowMs, timeFormat, wallClockOpts);
     const styledLabel = labelKey
         ? progressLabel(labelKey, colors, labelOptions)
@@ -195,9 +207,17 @@ function formatUsageWindowPart({ label: windowLabel, labelKey, percent, resetAt,
             : `(${reset})`
         : "";
     if (usageBarEnabled) {
+        // Battery mode: in 'remaining' mode the bar fills by remaining (drains as you
+        // use it) and follows the remaining-capacity palette, warming to red near empty.
+        const barFill = percent === null
+            ? 0
+            : usageValueMode === 'remaining'
+                ? Math.max(0, 100 - percent)
+                : percent;
+        const bar = quotaBar(barFill, barWidth, colors, meterColor);
         const body = resetSuffix
-            ? `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay} ${resetSuffix}`
-            : `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay}`;
+            ? `${bar} ${usageDisplay} ${resetSuffix}`
+            : `${bar} ${usageDisplay}`;
         return forceLabel ? `${styledLabel} ${body}` : body;
     }
     return resetSuffix
