@@ -2808,7 +2808,7 @@ test('renderUsageLine shows 7d reset countdown in text-only mode', () => {
   assert.ok(line.includes('(resets in 1d 4h)'), `should include 7d reset countdown in text-only mode: ${line}`);
 });
 
-test('renderUsageLine supports remaining-based usage display with used-percent colors', () => {
+test('renderUsageLine supports remaining-based usage display with capacity colors', () => {
   const ctx = baseContext();
   ctx.config.display.usageBarEnabled = false;
   ctx.config.display.usageValue = 'remaining';
@@ -2829,12 +2829,61 @@ test('renderUsageLine supports remaining-based usage display with used-percent c
   const line = renderUsageLine(ctx);
   assert.ok(line, 'should render usage line');
   assert.ok(
-    line.includes('\x1b[36m75%\x1b[0m'),
-    `expected remaining 5h usage with normal usage color, got: ${JSON.stringify(line)}`,
+    line.includes('\x1b[38;2;173;219;103m75%\x1b[0m'),
+    `expected remaining 5h usage with good-capacity color, got: ${JSON.stringify(line)}`,
   );
   assert.ok(
-    line.includes('\x1b[35m15%\x1b[0m'),
-    `expected remaining weekly usage with used-percent warning color, got: ${JSON.stringify(line)}`,
+    line.includes('\x1b[38;2;240;113;120m15%\x1b[0m'),
+    `expected remaining weekly usage with critical-capacity color, got: ${JSON.stringify(line)}`,
+  );
+});
+
+test('renderUsageLine fills remaining-mode bars by capacity with matching colors', () => {
+  const ctx = baseContext();
+  ctx.config.display.usageBarEnabled = true;
+  ctx.config.display.usageValue = 'remaining';
+  ctx.config.display.sevenDayThreshold = 80;
+  ctx.usageData = {
+    planName: 'Pro',
+    fiveHour: 25,
+    sevenDay: 85,
+    fiveHourResetAt: null,
+    sevenDayResetAt: null,
+  };
+
+  const line = withTerminal(120, () => renderUsageLine(ctx));
+  assert.ok(line, 'should render usage line');
+  assert.ok(
+    line.includes('\x1b[38;2;173;219;103m████████\x1b[2m░░\x1b[0m'),
+    `expected a 75%-filled good-capacity bar, got: ${JSON.stringify(line)}`,
+  );
+  assert.ok(
+    line.includes('\x1b[38;2;240;113;120m██\x1b[2m░░░░░░░░\x1b[0m'),
+    `expected a 15%-filled critical-capacity bar, got: ${JSON.stringify(line)}`,
+  );
+});
+
+test('renderSessionLine fills remaining-mode bars by capacity with matching colors', () => {
+  const ctx = baseContext();
+  ctx.config.display.usageBarEnabled = true;
+  ctx.config.display.usageValue = 'remaining';
+  ctx.config.display.sevenDayThreshold = 80;
+  ctx.usageData = {
+    planName: 'Pro',
+    fiveHour: 25,
+    sevenDay: 85,
+    fiveHourResetAt: null,
+    sevenDayResetAt: null,
+  };
+
+  const line = withTerminal(120, () => renderSessionLine(ctx));
+  assert.ok(
+    line.includes('\x1b[38;2;173;219;103m████████\x1b[2m░░\x1b[0m'),
+    `expected a 75%-filled good-capacity bar in the session line, got: ${JSON.stringify(line)}`,
+  );
+  assert.ok(
+    line.includes('\x1b[38;2;240;113;120m██\x1b[2m░░░░░░░░\x1b[0m'),
+    `expected a 15%-filled critical-capacity bar in the session line, got: ${JSON.stringify(line)}`,
   );
 });
 

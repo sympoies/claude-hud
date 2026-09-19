@@ -140,8 +140,8 @@ export function getQuotaColor(percent: number, colors?: Partial<HudColorOverride
 }
 
 /**
- * Remaining-capacity "battery" palette, matching serenvia/agent-console's usage
- * meter (Night Owl / codex-cli diag). Keyed on REMAINING percent: the color cools
+ * Remaining-capacity "battery" palette, matching the Night Owl capacity meter.
+ * Keyed on REMAINING percent: the color cools
  * toward cyan-green as capacity rises and warms toward red as it drains.
  */
 const USAGE_METER = {

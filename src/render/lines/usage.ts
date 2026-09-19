@@ -238,7 +238,7 @@ function formatUsagePercent(
 
 /**
  * Color for the usage number/bar. In 'remaining' (battery) mode it follows the
- * remaining-capacity palette (agent-console); otherwise the default used-based scale.
+ * Night Owl remaining-capacity palette; otherwise the default used-based scale.
  */
 function usageColor(
   percent: number | null,
