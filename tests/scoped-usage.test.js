@@ -212,6 +212,24 @@ test('renderSessionLine includes scoped usage and preserves a custom usage color
   assert.match(line, /\x1b\[36m38%\x1b\[0m/);
 });
 
+test('remaining-mode bars keep unknown model-scoped usage empty', () => {
+  const usage = scopedUsage({
+    scopedWindows: [{ label: 'Fable', percent: null, resetAt: null }],
+  });
+  const ctx = renderContext(usage, {
+    usageBarEnabled: true,
+    usageValue: 'remaining',
+  });
+
+  for (const line of [
+    stripAnsi(renderUsageLine(ctx) ?? ''),
+    stripAnsi(renderSessionLine(ctx)),
+  ]) {
+    assert.match(line, /Fable\s+░+\s+--/, `expected an empty unknown scoped bar: ${line}`);
+    assert.doesNotMatch(line, /Fable\s+█/, `unknown scoped usage must not render as filled: ${line}`);
+  }
+});
+
 // display.showModelScopedUsage — render-time gate for model_scoped windows.
 
 test('renderUsageLine keeps scoped windows alongside 5h/7d by default', () => {

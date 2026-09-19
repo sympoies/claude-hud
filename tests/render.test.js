@@ -2887,6 +2887,23 @@ test('renderSessionLine fills remaining-mode bars by capacity with matching colo
   );
 });
 
+test('remaining-mode bars keep unknown generic usage empty', () => {
+  const ctx = baseContext();
+  ctx.config.display.usageBarEnabled = true;
+  ctx.config.display.usageValue = 'remaining';
+  ctx.usageData = {
+    planName: 'Pro',
+    fiveHour: null,
+    sevenDay: null,
+    fiveHourResetAt: null,
+    sevenDayResetAt: null,
+  };
+
+  const session = stripAnsi(withTerminal(120, () => renderSessionLine(ctx)));
+  assert.match(session, /Usage\s+░{10}\s+--/, `expected an empty unknown-usage bar: ${session}`);
+  assert.doesNotMatch(session, /Usage\s+█/, `unknown usage must not render as filled: ${session}`);
+});
+
 test('renderUsageLine displays external balance labels', () => {
   const ctx = baseContext();
   ctx.usageData = {

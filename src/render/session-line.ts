@@ -488,8 +488,11 @@ function formatUsageWindowPart({
   if (usageBarEnabled) {
     // Battery mode: 'remaining' fills the bar by remaining (drains as you use it)
     // and follows the remaining-capacity palette, warming to red near empty.
-    const usedPercent = percent ?? 0;
-    const barFill = usageValueMode === 'remaining' ? Math.max(0, 100 - usedPercent) : usedPercent;
+    const barFill = percent === null
+      ? 0
+      : usageValueMode === 'remaining'
+        ? Math.max(0, 100 - percent)
+        : percent;
     // Relative mode keeps the upstream "(duration / windowLabel)" pattern (e.g. "2h 30m / 5h").
     // Absolute/both modes use the preposition form instead — "(at 14:30 / 5h)" is incoherent.
     const barReset = timeFormat === 'relative'

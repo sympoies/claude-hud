@@ -300,8 +300,11 @@ function formatUsageWindowPart({
   if (usageBarEnabled) {
     // Battery mode: in 'remaining' mode the bar fills by remaining (drains as you
     // use it) and follows the remaining-capacity palette, warming to red near empty.
-    const usedPercent = percent ?? 0;
-    const barFill = usageValueMode === 'remaining' ? Math.max(0, 100 - usedPercent) : usedPercent;
+    const barFill = percent === null
+      ? 0
+      : usageValueMode === 'remaining'
+        ? Math.max(0, 100 - percent)
+        : percent;
     const bar = quotaBar(barFill, barWidth, colors, meterColor);
     const body = resetSuffix
       ? `${bar} ${usageDisplay} ${resetSuffix}`
