@@ -20,6 +20,9 @@ architecture guide.
 
 ## Host statusline wiring
 
+Full host installation (bun, checkout, `statusLine`, and the standard display
+configuration) is in [docs/host-install.md](docs/host-install.md).
+
 Hosts run this fork by pointing `statusLine.command` in `~/.claude/settings.json`
 directly at a local checkout:
 
