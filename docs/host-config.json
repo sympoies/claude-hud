@@ -1,0 +1,22 @@
+{
+  "pathLevels": 2,
+  "gitStatus": {
+    "showAheadBehind": true,
+    "pushWarningThreshold": 5,
+    "pushCriticalThreshold": 10
+  },
+  "display": {
+    "showTools": true,
+    "showAgents": true,
+    "showTodos": true,
+    "showConfigCounts": true,
+    "showCost": true,
+    "showDuration": true,
+    "showSpeed": true,
+    "showSessionTokens": true,
+    "showEffortLevel": true,
+    "showPromptCache": true,
+    "sevenDayThreshold": 0,
+    "usageValue": "remaining"
+  }
+}
