@@ -53,9 +53,16 @@ mkdir -p ~/.claude/plugins/claude-hud
 cp docs/host-config.json ~/.claude/plugins/claude-hud/config.json
 ```
 
+The HUD reads this file from the active Claude config directory, so an
+account that runs with `CLAUDE_CONFIG_DIR` reads
+`$CLAUDE_CONFIG_DIR/plugins/claude-hud/config.json`. Either copy the file
+there too, or make each account's `plugins` a symlink to `~/.claude/plugins`
+so that every account shares one copy.
+
 [`host-config.json`](host-config.json) is the maintainer's standard
-configuration: two path levels, git ahead/behind warnings, every optional
-line on, and `"usageValue": "remaining"` (usage shown as what is left, in
+configuration: two path levels, git ahead/behind warnings, the tool, agent,
+todo, config-count, cost, duration, speed, session-token, effort and prompt-cache
+lines on, and `"usageValue": "remaining"` (usage shown as what is left, in
 the battery style). Hosts must use the same file; change it here first,
 then copy it to each host.
 
