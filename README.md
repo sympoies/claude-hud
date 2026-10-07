@@ -212,7 +212,7 @@ Simplified and Traditional Chinese HUD labels are available as explicit opt-ins.
 | `display.showDuration` | boolean | false | Show session duration `⏱️ 5m` |
 | `display.showSpeed` | boolean | false | Show output token speed `out: 42.1 tok/s` |
 | `display.showUsage` | boolean | true | Show Claude subscriber usage limits when available |
-| `display.usageValue` | `percent` \| `remaining` | `percent` | Usage display format (`25%` used, or `75%` remaining) |
+| `display.usageValue` | `percent` \| `remaining` | `percent` | Usage display format (`25%` used, or `75% left` remaining) |
 | `display.usageBarEnabled` | boolean | true | Display usage as visual bar instead of text |
 | `display.usageCompact` | boolean | false | Display usage in a shorter text form such as `5h: 25% (1h 30m)`; takes precedence over `display.usageBarEnabled` |
 | `display.showResetLabel` | boolean | true | Show the `resets in` prefix before usage countdowns |
@@ -287,7 +287,9 @@ ClaudeHUD detects the cache tier from the transcript when possible. The existing
 
 Usage display is **enabled by default** when Claude Code provides subscriber `rate_limits` data on stdin. It shows your rate limit consumption on line 2 alongside the context bar.
 
-Set `display.usageValue` to `remaining` to show quota left instead of quota used. Warning colors and 7-day threshold checks still use the underlying used percentage.
+Set `display.usageValue` to `remaining` to show quota left instead of quota used, with an explicit `% left` suffix. Exhausted windows retain `0% left`, their warning, and reset time. Set `sevenDayThreshold` to `0` to always show both populated windows. Quota thresholds still use the underlying used percentage; remaining-mode colors follow available capacity.
+
+See the [cross-harness design and native Codex preset](docs/cross-harness-status.md) for matching remaining-capacity indicators.
 
 ClaudeHUD prefers the official statusline stdin payload for rate-limit windows. If `display.externalUsagePath` points to a fresh local sidecar snapshot, ClaudeHUD can append its `balance_label` alongside stdin windows. If stdin `rate_limits` are missing, the same snapshot can provide fallback usage windows.
 

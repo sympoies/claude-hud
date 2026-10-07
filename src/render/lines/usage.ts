@@ -81,7 +81,7 @@ export function renderUsageLine(
         .join(' | ')
     : '';
 
-  if (isLimitReached(ctx.usageData)) {
+  if (isLimitReached(ctx.usageData) && usageValueMode !== 'remaining') {
     const limitTimeFormat = limitResetTimeFormat(timeFormat);
     const resetTime =
       ctx.usageData.fiveHour === 100
@@ -233,7 +233,11 @@ function formatUsagePercent(
   }
   const color = colorOverride ?? getQuotaColor(percent, colors);
   const displayPercent = mode === 'remaining' ? Math.max(0, 100 - percent) : percent;
-  return `${color}${displayPercent}%${RESET}`;
+  const suffix = mode === 'remaining' ? ' left' : '';
+  const warning = mode === 'remaining' && percent === 100
+    ? ` ${critical(`⚠ ${t("status.limitReached")}`, colors)}`
+    : '';
+  return `${color}${displayPercent}%${suffix}${RESET}${warning}`;
 }
 
 /**

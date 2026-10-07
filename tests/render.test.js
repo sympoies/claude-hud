@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -2829,11 +2830,11 @@ test('renderUsageLine supports remaining-based usage display with capacity color
   const line = renderUsageLine(ctx);
   assert.ok(line, 'should render usage line');
   assert.ok(
-    line.includes('\x1b[38;2;173;219;103m75%\x1b[0m'),
+    line.includes('\x1b[38;2;173;219;103m75% left\x1b[0m'),
     `expected remaining 5h usage with good-capacity color, got: ${JSON.stringify(line)}`,
   );
   assert.ok(
-    line.includes('\x1b[38;2;240;113;120m15%\x1b[0m'),
+    line.includes('\x1b[38;2;240;113;120m15% left\x1b[0m'),
     `expected remaining weekly usage with critical-capacity color, got: ${JSON.stringify(line)}`,
   );
 });
@@ -4476,4 +4477,38 @@ test('render expanded layout still stacks a right-aligned group that does not fi
 
   assert.equal(combined, undefined, 'narrow terminals should stack instead of combining');
   assert.ok(contextLine, 'expected a standalone context line');
+});
+
+for (const usageCompact of [false, true]) {
+  for (const exhausted of ['fiveHour', 'sevenDay']) {
+    test(`compact session retains remaining windows at ${exhausted} exhaustion (usageCompact=${usageCompact})`, () => {
+      const ctx = baseContext();
+      ctx.config.display.usageValue = 'remaining';
+      ctx.config.display.usageCompact = usageCompact;
+      ctx.config.display.sevenDayThreshold = 0;
+      ctx.usageData = {
+        fiveHour: 40, sevenDay: 25,
+        fiveHourResetAt: null, sevenDayResetAt: null,
+      };
+      ctx.usageData[exhausted] = 100;
+      const line = stripAnsi(renderSessionLine(ctx));
+      assert.ok(line.includes('0% left'), line);
+      assert.ok(line.includes(exhausted === 'fiveHour' ? '75% left' : '60% left'), line);
+      assert.ok(line.includes('Limit'), line);
+    });
+  }
+}
+
+test('remaining quota text preserves compact consumer context interpretation', () => {
+  const ctx = baseContext();
+  ctx.config = mergeConfig(JSON.parse(readFileSync(new URL('../docs/host-config.json', import.meta.url), 'utf8')));
+  ctx.stdin.context_window.used_percentage = 40;
+  ctx.usageData = { fiveHour: 20, sevenDay: 10, fiveHourResetAt: null, sevenDayResetAt: null };
+  const identity = stripAnsi(renderIdentityLine(ctx));
+  const quota = stripAnsi(renderUsageLine(ctx));
+  // Consumer reads only Context and treats an absent " left" suffix as used.
+  const match = `${identity} | ${quota}`.match(/Context\b[^\n%]*?(\d{1,3})%( left)?/);
+  assert.ok(match, identity);
+  assert.equal(match[2], undefined);
+  assert.ok(quota.includes('80% left') && quota.includes('90% left'), quota);
 });

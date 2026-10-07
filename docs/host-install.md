@@ -75,3 +75,6 @@ echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"'"$PWD"'"}}' 
 
 This prints the model and a context bar. In a live session, the usage bar
 should read as remaining (close to 100% right after a reset).
+
+For the matching native Codex footer and the renderer/mod design, see
+[remaining-capacity status](cross-harness-status.md).
