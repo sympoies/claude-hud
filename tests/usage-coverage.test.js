@@ -309,3 +309,34 @@ test('renderUsageLine elapsedAndAbsolute format for limit uses absolute', () => 
   assert.ok(line.includes('Limit reached'));
   assert.ok(line.includes('resets at'));
 });
+
+for (const compact of [false, true]) {
+  for (const exhausted of ['fiveHour', 'sevenDay']) {
+    test(`remaining mode preserves both quota percentages when ${exhausted} is exhausted (compact=${compact})`, () => {
+      const ctx = baseContext();
+      ctx.config.display.usageValue = 'remaining';
+      ctx.config.display.usageCompact = compact;
+      ctx.config.display.sevenDayThreshold = 0;
+      ctx.usageData.fiveHour = 40;
+      ctx.usageData.sevenDay = 25;
+      ctx.usageData[exhausted] = 100;
+      const line = stripAnsi(renderUsageLine(ctx) ?? '');
+      assert.ok(line.includes('0% left'), line);
+      assert.ok(line.includes(exhausted === 'fiveHour' ? '75% left' : '60% left'), line);
+      assert.ok(line.includes('Limit'), line);
+      assert.ok(line.includes(compact ? '7d:' : 'Weekly'), line);
+    });
+  }
+}
+
+test('remaining mode labels capacity and does not fabricate an unavailable window', () => {
+  const ctx = baseContext();
+  ctx.config.display.usageValue = 'remaining';
+  ctx.config.display.usageCompact = true;
+  ctx.config.display.sevenDayThreshold = 0;
+  ctx.usageData.fiveHour = null;
+  ctx.usageData.sevenDay = 0;
+  const line = stripAnsi(renderUsageLine(ctx) ?? '');
+  assert.ok(line.includes('7d: 100% left'), line);
+  assert.ok(!line.includes('5h:'), line);
+});

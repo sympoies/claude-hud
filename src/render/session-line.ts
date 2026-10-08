@@ -215,7 +215,7 @@ export function renderSessionLine(ctx: RenderContext): string {
           }),
     );
 
-    if (isLimitReached(ctx.usageData)) {
+    if (isLimitReached(ctx.usageData) && usageValueMode !== 'remaining') {
       const resetTime = ctx.usageData.fiveHour === 100
         ? formatResetTime(ctx.usageData.fiveHourResetAt, timeFormat, wallClockOpts)
         : formatResetTime(ctx.usageData.sevenDayResetAt, timeFormat, wallClockOpts);
@@ -437,7 +437,11 @@ function formatUsagePercent(
   }
   const color = colorOverride ?? getQuotaColor(percent, colors);
   const displayPercent = mode === 'remaining' ? Math.max(0, 100 - percent) : percent;
-  return `${color}${displayPercent}%${RESET}`;
+  const suffix = mode === 'remaining' ? ' left' : '';
+  const warning = mode === 'remaining' && percent === 100
+    ? ` ${critical(`⚠ ${t('status.limitReached')}`, colors)}`
+    : '';
+  return `${color}${displayPercent}%${suffix}${RESET}${warning}`;
 }
 
 /**
