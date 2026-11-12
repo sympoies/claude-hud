@@ -6,16 +6,16 @@
     "pushCriticalThreshold": 10
   },
   "display": {
-    "showTools": true,
-    "showAgents": true,
-    "showTodos": true,
-    "showConfigCounts": true,
+    "showTools": false,
+    "showAgents": false,
+    "showTodos": false,
+    "showConfigCounts": false,
     "showCost": true,
     "showDuration": true,
     "showSpeed": true,
-    "showSessionTokens": true,
+    "showSessionTokens": false,
     "showEffortLevel": true,
-    "showPromptCache": true,
+    "showPromptCache": false,
     "sevenDayThreshold": 0,
     "usageValue": "remaining"
   }
