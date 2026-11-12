@@ -5,8 +5,8 @@ from the published `claude-hud` plugin package. The plugin only provides the
 `setup` and `configure` commands; the statusline itself renders from the
 checkout (see "Host statusline wiring" in [AGENTS.md](../AGENTS.md)). A host
 needs all four steps below. Skipping step 4 still renders a HUD, but it falls
-back to the default display: used instead of remaining usage, and no
-cache, token or speed lines. That failure is easy to miss.
+back to the default display: used instead of remaining usage, and the
+cost, duration, speed and effort lines missing. That failure is easy to miss.
 
 ## 1. Install bun
 
@@ -60,10 +60,10 @@ there too, or make each account's `plugins` a symlink to `~/.claude/plugins`
 so that every account shares one copy.
 
 [`host-config.json`](host-config.json) is the maintainer's standard
-configuration: two path levels, git ahead/behind warnings, the tool, agent,
-todo, config-count, cost, duration, speed, session-token, effort and prompt-cache
-lines on, and `"usageValue": "remaining"` (usage shown as what is left, in
-the battery style). Hosts must use the same file; change it here first,
+configuration: two path levels, git ahead/behind warnings, the cost, duration,
+speed and effort lines on, the tool, agent, todo, config-count, session-token
+and prompt-cache lines off, and `"usageValue": "remaining"` (usage shown as what
+is left, in the battery style). Hosts must use the same file; change it here first,
 then copy it to each host.
 
 ## Verify
